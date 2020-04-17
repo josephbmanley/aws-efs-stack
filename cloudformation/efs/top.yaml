@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: General use ECS Cluster
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: The id of the VPC the cluster will be in
+    ConstraintDescription: VPC Id must begin with 'vpc-'
+  VpcCidr:
+    Type: String
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnets to create mount target in
+  Project:
+    Type: String
+    Description: Project used in naming in tagging to associate with cluster
+  Environment:
+    Type: String
+    Description: Environment used in naming and tagging to associate with cluster
+
+Resources:
+
+  EfsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow access to efs
+      VpcId: !Ref 'VpcId'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-${Environment}-EFS-SecurityGroup'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '2049'
+          ToPort: '2049'
+          CidrIp: !Ref VpcCidr
+
+  Efs:
+    Type: AWS::EFS::FileSystem
+    DeletionPolicy: Retain
+    Properties:
+      FileSystemTags: 
+        - Key: "Environment"
+          Value: !Ref Environment
+        - Key: "Project"
+          Value: !Ref Project
+      ThroughputMode: bursting
+
+  Munt:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref Efs
+      SecurityGroups: [ !Ref EfsSecurityGroup ]
+      SubnetId: !Ref SubnetId
