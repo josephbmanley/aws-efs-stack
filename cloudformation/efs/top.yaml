@@ -44,7 +44,7 @@ Resources:
           Value: !Ref Project
       ThroughputMode: bursting
 
-  Munt:
+  Mount:
     Type: AWS::EFS::MountTarget
     Properties:
       FileSystemId: !Ref Efs
